@@ -329,6 +329,21 @@
   #sbToggle{display:none}
   body.authed #sbToggle{display:grid}
   .gbtn{font-weight:600}
+  /* welcome / how-it-works popup */
+  .welcome-head{text-align:center;margin-bottom:20px}
+  .welcome-head h3{font-size:21px;font-weight:800}
+  .welcome-head p{color:var(--muted);font-size:14px;margin-top:7px}
+  .w-orb{width:54px;height:54px;border-radius:50%;margin:0 auto 14px;position:relative;
+    background:radial-gradient(circle at 32% 28%,#1a4a96,var(--navy) 55%,#06224f);box-shadow:0 8px 22px rgba(8,43,99,.35)}
+  .w-orb::after{content:'';position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);box-shadow:0 0 12px 3px rgba(212,161,43,.7)}
+  .steps{display:flex;flex-direction:column;gap:15px;margin:4px 0 22px}
+  .step{display:flex;gap:13px;align-items:flex-start}
+  .step .num{width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex:0 0 30px;margin-top:1px}
+  html[data-theme="dark"] .step .num{background:var(--gold);color:#0a0f17}
+  .step h4{font-size:15.5px;font-weight:700;margin:0 0 3px}
+  .step p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.5}
+  .skip{display:block;width:100%;text-align:center;margin-top:14px;color:var(--muted);font-size:13.5px;font-weight:550;background:none;border:0;cursor:pointer;padding:6px}
+  .skip:hover{color:var(--ink)}
   @media(min-width:1024px){
     body.sidebar-open header{left:280px}
     body.sidebar-open main{margin-left:280px}
@@ -677,11 +692,34 @@
   </div>
 </div>
 
+<!-- WELCOME / HOW IT WORKS POPUP -->
+<div class="ov" id="welcomeModal">
+  <div class="sheet sm">
+    <div class="sh-body" style="padding:30px 28px 26px">
+      <div class="welcome-head">
+        <div class="w-orb"></div>
+        <h3>Get the most out of <span style="color:var(--gold)">AskAnnuityAI</span></h3>
+        <p>Three quick steps to smarter retirement answers.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="num">1</div><div><h4>Ask anything</h4><p>Type any retirement or annuity question and get a clear, instant answer — share as much or as little as you like.</p></div></div>
+        <div class="step"><div class="num">2</div><div><h4>Create a free account</h4><p>Sign in with Google so your conversations, answers, and favorites are saved across every visit.</p></div></div>
+        <div class="step"><div class="num">3</div><div><h4>Keep learning</h4><p>Unlock curated resources and pick up right where you left off, anytime.</p></div></div>
+      </div>
+      <div class="auth-btns">
+        <button id="welcomeGoogle" class="gbtn"><svg width="18" height="18" viewBox="0 0 48 48" style="flex:0 0 18px"><path fill="#EA4335" d="M24 9.5c3.54 0 6.7 1.22 9.2 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continue with Google</button>
+      </div>
+      <button class="skip" id="welcomeSkip">Maybe later</button>
+      <p style="text-align:center;font-size:11.5px;color:var(--faint);margin-top:12px">Free forever · No spam · Unsubscribe anytime</p>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 /* ===================== STORAGE ===================== */
-const LS={kb:'aai2_kb',leads:'aai2_leads',cfg:'aai2_cfg',user:'aai2_user',convos:'aai2_convos',favs:'aai2_favs',stats:'aai2_stats',theme:'aai2_theme'};
+const LS={kb:'aai2_kb',leads:'aai2_leads',cfg:'aai2_cfg',user:'aai2_user',convos:'aai2_convos',favs:'aai2_favs',stats:'aai2_stats',theme:'aai2_theme',welcomed:'aai2_welcomed'};
 const DEFAULT_CFG={phone:'(555) 555-0123',phoneRaw:'+15555550123',leadEmail:'stevenson@pacificridgewayinsurance.com',
   booking:'https://calendly.com/pacific-ridgeway/retirement-review',bookLink:'https://pacificridgeway.com/book',
   uniLink:'https://pacificridgeway.com/university',adminPassword:'ridgeway2026'};
@@ -707,7 +745,8 @@ const DEFAULT_KB=[
  {id:'d11',title:'What happens to the annuity when I die?',source:'Annuity Basics',text:`It depends on the contract and options chosen. Many annuities include a death benefit paying remaining value to your named beneficiary, often bypassing probate. Some income options guarantee payments for a minimum number of years or return unused premium to heirs, while a life-only option stops at death in exchange for the highest payment. Choosing the payout option and beneficiary structure is an important planning decision worth discussing with an advisor.`},
  {id:'d12',title:'How do I get a quote or personalized illustration?',source:'Getting Started',text:`To get real numbers, a licensed professional prepares an illustration based on your age, the amount considered, when you want income to start, and current rates. It's free with no obligation. The fastest way is to request a free retirement review on this page — a licensed professional will follow up. You can also book a call directly or call the number listed on this page.`},
  {id:'d13',title:'Annuities, Social Security, and market risk',source:'Retirement Income Guide',text:`Annuities are often used alongside Social Security to cover essential expenses with guaranteed income, reducing how much you must withdraw from market-exposed investments during downturns — which helps manage sequence-of-returns risk early in retirement. A common approach pairs Social Security and an income annuity to cover the basics, leaving other investments for growth and flexibility. The right mix is personal and depends on your expenses, other income, and risk tolerance.`},
- {id:'d14',title:'Annuities vs. CDs',source:'Annuity Basics',text:`A fixed annuity and a bank CD both offer a guaranteed rate, but they differ in important ways. Annuity growth is tax-deferred until withdrawal, while CD interest is taxed each year. CDs are FDIC insured; annuities are backed by the insurer and state guaranty associations instead. Annuities can also offer lifetime-income options a CD cannot, but they typically have longer surrender periods and less short-term liquidity. The right choice depends on your time horizon and whether you want lifetime income.`}
+ {id:'d14',title:'Annuities vs. CDs',source:'Annuity Basics',text:`A fixed annuity and a bank CD both offer a guaranteed rate, but they differ in important ways. Annuity growth is tax-deferred until withdrawal, while CD interest is taxed each year. CDs are FDIC insured; annuities are backed by the insurer and state guaranty associations instead. Annuities can also offer lifetime-income options a CD cannot, but they typically have longer surrender periods and less short-term liquidity. The right choice depends on your time horizon and whether you want lifetime income.`},
+ {id:'d15',title:'The "invest the assets, buy the income" holistic approach',source:'Holistic Retirement Planning',text:`A holistic retirement plan often gives your savings two distinct jobs: INCOME and GROWTH. First you "buy the income" — you use a portion of your assets to secure guaranteed lifetime income, typically through an annuity working alongside Social Security, so that your essential expenses like housing, food, healthcare, and utilities are covered for life no matter what the markets do. Then you "invest the assets" — you keep the remainder in a diversified portfolio aimed at growth, liquidity, inflation protection, and leaving a legacy. The core idea is that once your basic needs are guaranteed, you can invest the rest with more confidence and less temptation to sell in a downturn, which helps manage sequence-of-returns risk early in retirement. It's a balanced, both-and strategy rather than an all-or-nothing choice between safety and growth. The right split between guaranteed income and invested assets depends on your essential expenses, other income sources, risk tolerance, time horizon, and goals — a licensed professional can help you model what fits your situation.`}
 ];
 const loadKB=()=>[...DEFAULT_KB,...J(LS.kb,[])];
 const loadAdminKB=()=>J(LS.kb,[]);
@@ -728,8 +767,8 @@ const ADVICE=/\b(should i|should we|is .* right for me|what should|tell me what 
 /* ===================== CHAT ===================== */
 const msgsEl=$('msgs'),chatscroll=$('chatscroll');
 let exchanges=0,convoId=null,currentConvo=[],asked=new Set(),streaming=false,proCount=0,lastProAt=-99;
-const PROMPTS=['What is an annuity, simply?','How do fixed indexed annuities work?','Will I run out of money in retirement?','How are annuities taxed?','Should I roll over my 401(k)?'];
-const FOLLOWPOOL=['What are the fees and surrender charges?','Are annuities safe if the market crashes?','What happens to my annuity when I die?','Annuities vs. CDs — what’s the difference?','How does an income rider work?','How much retirement income can I create?','Annuities and Social Security together?'];
+const PROMPTS=['What is an annuity, simply?','How do fixed indexed annuities work?','What is the "invest the assets, buy the income" approach?','How are annuities taxed?','Should I roll over my 401(k)?'];
+const FOLLOWPOOL=['What are the fees and surrender charges?','Are annuities safe if the market crashes?','What happens to my annuity when I die?','Annuities vs. CDs — what’s the difference?','How does an income rider work?','How much retirement income can I create?','Annuities and Social Security together?','How do I cover my essential expenses in retirement?','Will I run out of money in retirement?'];
 
 function botAvatar(){return '<div class="avatar"><svg><use href="#mtn"/></svg></div>';}
 function scrollBottom(){chatscroll.scrollTop=chatscroll.scrollHeight;}
@@ -895,6 +934,17 @@ function applyCfg(){const c=getCfg();$('phoneLabel').textContent=c.phone;$('okPh
   $('bookLink').href=c.booking;$('cardBook').href=c.bookLink;$('cardUni').href=c.uniLink;$('yr').textContent=new Date().getFullYear();
   $('bookNav').onclick=()=>{document.body.classList.remove('chatting');location.hash='#talk';};}
 applyCfg();refreshAuthUI();if(getUser()&&innerWidth>=1024)openSidebar();
+
+/* ---- welcome / how-it-works popup ---- */
+function registerLearnerLead(u){const leads=J(LS.leads,[]);
+  if(!leads.some(l=>l.email===u.email&&l.source==='Welcome popup')){
+    leads.unshift({name:u.name||'',email:u.email||'',phone:'',amount:'',message:'Wants to continuously learn (signed up via welcome pop-up)',source:'Welcome popup',ts:new Date().toISOString()});
+    S(LS.leads,leads);}
+}
+$('welcomeGoogle').onclick=()=>{const u={name:'Google User',email:'you@gmail.com',provider:'Google'};loginAs(u);registerLearnerLead(u);$('welcomeModal').classList.remove('open');S(LS.welcomed,1);toast('Welcome aboard! 🎉');};
+$('welcomeSkip').onclick=()=>{$('welcomeModal').classList.remove('open');S(LS.welcomed,1);};
+$('welcomeModal').addEventListener('click',e=>{if(e.target===$('welcomeModal'))S(LS.welcomed,1);});
+if(!getUser()&&!J(LS.welcomed,0)){setTimeout(()=>{if(!getUser()&&!document.body.classList.contains('chatting'))$('welcomeModal').classList.add('open');},1300);}
 
 /* ===================== THEME ===================== */
 const themeBtn=$('themeBtn');
